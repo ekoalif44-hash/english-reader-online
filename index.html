@@ -235,7 +235,7 @@
       left: 50%;
       top: 8px;
       transform: translateX(-50%);
-      pointer-events: none; /* anak-anaknya yang bisa diklik */
+      pointer-events: none;
       color: transparent;
       width: auto;
       height: calc(100% - 16px);
@@ -258,7 +258,7 @@
       border-radius: 3px;
       color: transparent;
       transition: background 80ms ease, box-shadow 80ms ease, outline 80ms ease;
-      pointer-events: auto; /* penting: bisa diklik */
+      pointer-events: auto;
     }
 
     .word.unknown {
@@ -441,7 +441,7 @@
   <header>
     <h1>ENGLISH READER</h1>
     <p>
-      Upload PDF, lalu klik 1 kata atau blok beberapa kata (drag) untuk terjemahan & pronunciation langsung di atas halaman.
+      Upload PDF, lalu klik 1 kata atau blok beberapa kata (drag) untuk terjemahan &amp; pronunciation langsung di atas halaman.
     </p>
   </header>
 
@@ -493,7 +493,7 @@
       <hr />
 
       <h2 style="margin-top:8px;">Saved vocabulary</h2>
-      <small>All words & meanings are stored in your browser (localStorage), only for you.</small>
+      <small>All words &amp; meanings are stored in your browser (localStorage), only for you.</small>
 
       <div style="margin: 10px 0 8px;">
         <button id="exportVocab" class="secondary">Export vocab (JSON)</button>
@@ -510,9 +510,11 @@
 
   <!-- Script utama -->
   <script>
-    // ====== KONFIGURASI GLOBAL ======
+    // ====== KONFIGURASI GLOBAL (langsung ke MyMemory, tanpa server sendiri) ======
     const AUTO_TRANSLATE_ENABLED = true;
-    const TRANSLATE_API_URL = "http://localhost:4000/api/translate";
+    const MYMEMORY_BASE_URL = "https://api.mymemory.translated.net/get";
+    const SOURCE_LANG = "en";
+    const TARGET_LANG = "id";
 
     // ====== STATE & DOM ======
     let dictionary = {};
@@ -565,30 +567,23 @@
       }
     }
 
-    // ====== AUTOTRANSLATE API ======
+    // ====== AUTOTRANSLATE API (langsung MyMemory) ======
     async function translateWordWithApi(text) {
-      if (!AUTO_TRANSLATE_ENABLED || !TRANSLATE_API_URL) {
-        return null;
-      }
+      if (!AUTO_TRANSLATE_ENABLED) return null;
 
-      const payload = {
-        text,
-        sourceLang: "en",
-      };
+      const langpair = SOURCE_LANG + "|" + TARGET_LANG;
+      const url =
+        MYMEMORY_BASE_URL +
+        "?q=" + encodeURIComponent(text) +
+        "&langpair=" + encodeURIComponent(langpair);
 
-      const res = await fetch(TRANSLATE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
+      const res = await fetch(url);
       if (!res.ok) throw new Error("HTTP " + res.status);
 
       const data = await res.json();
-      if (!data.translated) {
-        throw new Error("Response API tidak punya field 'translated'");
-      }
-      return data.translated;
+      const translated =
+        data?.responseData?.translatedText || "(no translation result)";
+      return translated;
     }
 
     // ====== RESET & STATS ======
@@ -723,7 +718,7 @@
       activeWordStatus.textContent = "Requesting automatic translation...";
       showTooltip(span, originalWord, "…");
 
-      if (AUTO_TRANSLATE_ENABLED && TRANSLATE_API_URL) {
+      if (AUTO_TRANSLATE_ENABLED) {
         try {
           span.style.outline = "2px solid #16a34a";
           const meaning = await translateWordWithApi(originalWord);
@@ -768,7 +763,7 @@
         const range = sel.getRangeAt(0);
         if (!nodeInsidePdfViewer(range.commonAncestorContainer)) return;
 
-        // cek jumlah kata (menggunakan semua jenis whitespace)
+        // cek jumlah kata
         const words = text.split(/\s+/).filter(Boolean);
         if (words.length < 2) {
           // kalau cuma satu kata, biarkan fitur klik-per-kata yang bekerja
