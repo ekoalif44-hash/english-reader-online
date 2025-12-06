@@ -3,7 +3,9 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const PORT = 4000;
+
+// PENTING: pakai PORT dari environment (untuk Render) atau 4000 saat lokal
+const PORT = process.env.PORT || 4000;
 
 // middleware
 app.use(cors());
@@ -11,7 +13,7 @@ app.use(express.json());
 
 // fungsi bantu pilih pasangan bahasa
 function getLangPair(sourceLang) {
-  // sekarang kita pakai Inggris -> Indonesia saja
+  // sekarang kita hanya pakai en -> id
   return "en|id";
 }
 
@@ -54,5 +56,10 @@ app.post("/api/translate", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log("Translate server running at http://localhost:" + PORT);
+  console.log("Translate server running on port " + PORT);
 });
+
+// >>> HAPUS / JANGAN PAKAI LAGI SPAM INI <<<
+// setInterval(() => {
+//   console.log("Server masih hidup...");
+// }, 10000);
