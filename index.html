@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>English Reader – Click on PDF</title>
+
+  <style>
+    /* ====== LAYOUT & GLOBAL ====== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-body: #020617;
+      --bg-panel: #020617;
+      --bg-panel-soft: #020617;
+      --border-subtle: #1e293b;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.08);
+      --accent-strong: rgba(59, 130, 246, 0.4);
+      --accent-gold: #fbbf24;
+      --text-main: #e5e7eb;
+      --text-soft: #9ca3af;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.55);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: radial-gradient(
+        circle at 0% 0%,
+        #0f172a 0,
+        #020617 40%,
+        #020617 100%
+      );
+      color: var(--text-main);
+    }
+
+    /* ====== HEADER ====== */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(90deg, #020617, #020617, #0b1120);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1f2937;
+      padding: 14px 28px 12px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    /* ====== MAIN LAYOUT ====== */
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px 20px 40px;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(280px, 1.15fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ====== PANELS ====== */
+    .panel {
+      background: radial-gradient(circle at 0 0, #1f2937 0, #020617 55%);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px 18px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .panel small {
+      color: var(--text-soft);
+    }
+
+    /* ====== UPLOAD AREA ====== */
+    .file-input {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 12px 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed #1f2937;
+    }
+
+    .file-input label {
+      font-size: 13px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    input[type="file"] {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    /* ====== BUTTONS ====== */
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        background 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 34px rgba(37, 99, 235, 0.6);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+    }
+
+    button.secondary {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      border: 1px solid #1f2937;
+      box-shadow: none;
+    }
+
+    button.secondary:hover:not(:disabled) {
+      background: #020617;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.65);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ====== PDF VIEWER CUSTOM ====== */
+    #pdfViewer {
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      background: #020617;
+      max-height: 78vh;
+      overflow: auto;
+      position: relative;
+    }
+
+    #pdfViewer::-webkit-scrollbar {
+      width: 8px;
+    }
+    #pdfViewer::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    #pdfViewer::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 999px;
+    }
+    #pdfViewer::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+
+    .pageWrapper {
+      position: relative;
+      margin: 12px auto;
+      background: #111827;
+      padding: 8px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .pageWrapper canvas {
+      background: #ffffff;
+      box-shadow: 0 22px 60px rgba(15, 23, 42, 0.6);
+    }
+
+    .pageNumberLabel {
+      position: absolute;
+      bottom: 8px;
+      right: 18px;
+      font-size: 11px;
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    /* ====== TEXT LAYER OVERLAY ====== */
+    .textLayer {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      pointer-events: none; /* anak-anaknya yang bisa diklik */
+      color: transparent;
+      width: auto;
+      height: calc(100% - 16px);
+      overflow: visible;
+    }
+
+    .textItem {
+      position: absolute;
+      white-space: pre;
+      pointer-events: none;
+    }
+
+    /* ====== WORD TOKENS ====== */
+    .word {
+      display: inline;
+      cursor: pointer;
+      position: relative;
+      padding: 0 1px;
+      margin: 0;
+      border-radius: 3px;
+      color: transparent;
+      transition: background 80ms ease, box-shadow 80ms ease, outline 80ms ease;
+      pointer-events: auto; /* penting: bisa diklik */
+    }
+
+    .word.unknown {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .word.known {
+      background: rgba(250, 204, 21, 0.4);
+      box-shadow: 0 0 0 0.5px rgba(202, 138, 4, 0.7);
+    }
+
+    .word.selected {
+      outline: 1.5px solid #0f766e;
+      outline-offset: 1px;
+      background: rgba(56, 189, 248, 0.3);
+    }
+
+    .word:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
+    /* ====== TOOLTIP ====== */
+    #tooltip {
+      position: fixed;
+      display: none;
+      max-width: 260px;
+      background: #020617;
+      color: #e5e7eb;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      z-index: 9999;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+      border: 1px solid #1f2937;
+      transform-origin: bottom center;
+      animation: tooltip-in 120ms ease-out;
+    }
+
+    #tooltip strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #facc15;
+    }
+
+    #tooltip::after {
+      content: "";
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 7px;
+      border-style: solid;
+      border-color: #020617 transparent transparent transparent;
+    }
+
+    @keyframes tooltip-in {
+      from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ====== STATS & VOCAB ====== */
+    .stats {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-top: 8px;
+    }
+
+    .vocab-list {
+      max-height: 260px;
+      overflow: auto;
+      font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 8px;
+      background: radial-gradient(circle at 0 0, #020617 0, #020617 60%);
+    }
+
+    .vocab-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .vocab-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .vocab-list::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 999px;
+    }
+
+    .vocab-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 0;
+      border-bottom: 1px solid #0f172a;
+    }
+
+    .vocab-item:last-child {
+      border-bottom: none;
+    }
+
+    .vocab-item span.word-en {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .vocab-item span.word-id {
+      color: #d1d5db;
+    }
+
+    .vocab-item button {
+      padding: 2px 8px;
+      font-size: 11px;
+    }
+
+    /* ====== RIGHT PANEL ====== */
+    .active-word-panel h3 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #f9fafb;
+    }
+
+    #activeWordText {
+      margin-top: 4px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #facc15;
+    }
+
+    .active-word-panel input[type="text"] {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 9px;
+      border: 1px solid #1f2937;
+      font-size: 13px;
+      box-sizing: border-box;
+      margin-top: 4px;
+      background: #020617;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .active-word-panel input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    .small-note {
+      font-size: 11px;
+      color: var(--text-soft);
+      display: block;
+      margin-top: 4px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #1f2937;
+      margin: 14px 0;
+    }
+  </style>
+
+  <!-- PDF.js dari CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+  <script>
+    window.pdfjsLib = window["pdfjs-dist/build/pdf"];
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js";
+  </script>
+</head>
+
+<body>
+  <header>
+    <h1>ENGLISH READER</h1>
+    <p>
+      Upload PDF, lalu klik 1 kata atau blok beberapa kata (drag) untuk terjemahan & pronunciation langsung di atas halaman.
+    </p>
+  </header>
+
+  <main>
+    <!-- Panel kiri: PDF viewer custom -->
+    <section class="panel">
+      <h2>1. Load PDF</h2>
+      <small>Gunakan PDF dengan teks (bukan scan gambar saja) untuk hasil terbaik.</small>
+
+      <div class="file-input">
+        <label>Upload file PDF:
+          <input type="file" id="pdfInput" accept="application/pdf" />
+        </label>
+        <small>Setelah upload, halaman PDF akan tampil di bawah. Klik satu kata, atau blok beberapa kata.</small>
+      </div>
+
+      <h2>2. PDF pages (click / select text)</h2>
+      <div id="pdfViewer">
+        <div class="empty-message" style="padding:30px 16px; text-align:center; color:#9ca3af;">
+          Belum ada PDF. Upload file untuk melihat halaman di sini.
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <!-- Panel kanan: kata aktif + kosakata -->
+    <aside class="panel">
+      <div class="active-word-panel">
+        <h3>Selected text</h3>
+        <div id="activeWordText"><em>No word selected.</em></div>
+        <div style="margin:8px 0 4px;">
+          <button id="playAudioBtn" class="secondary" disabled>🔊 Pronounce</button>
+        </div>
+        <label for="activeWordMeaningInput">Meaning (Indonesian):</label>
+        <input
+          id="activeWordMeaningInput"
+          type="text"
+          placeholder="Indonesian meaning..."
+          disabled
+        />
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+          <button id="saveMeaningBtn" disabled>Save meaning</button>
+          <button id="clearMeaningBtn" class="secondary" disabled>Delete meaning</button>
+        </div>
+        <small id="activeWordStatus" class="small-note"></small>
+      </div>
+
+      <hr />
+
+      <h2 style="margin-top:8px;">Saved vocabulary</h2>
+      <small>All words & meanings are stored in your browser (localStorage), only for you.</small>
+
+      <div style="margin: 10px 0 8px;">
+        <button id="exportVocab" class="secondary">Export vocab (JSON)</button>
+        <button id="clearVocab" class="secondary">Clear all vocab</button>
+      </div>
+
+      <div id="vocabCount" class="stats"></div>
+      <div class="vocab-list" id="vocabList"></div>
+    </aside>
+  </main>
+
+  <!-- Tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- Script utama -->
+  <script>
+    // ====== KONFIGURASI GLOBAL ======
+    const AUTO_TRANSLATE_ENABLED = true;
+    const TRANSLATE_API_URL = "http://localhost:4000/api/translate";
+
+    // ====== STATE & DOM ======
+    let dictionary = {};
+    let wordIndex = {};
+    let totalWords = 0;
+    let uniqueWordsInText = 0;
+    let seenWordsGlobal = new Set();
+
+    let activeWordKey = null;        // hanya untuk 1 kata
+    let activeWordOriginal = null;   // kata / kalimat terpilih
+    let currentSelectedSpan = null;  // span .word yang sedang dipilih
+
+    const pdfInput = document.getElementById("pdfInput");
+    const pdfViewer = document.getElementById("pdfViewer");
+
+    const tooltip = document.getElementById("tooltip");
+    const statsEl = document.getElementById("stats");
+    const vocabListEl = document.getElementById("vocabList");
+    const vocabCountEl = document.getElementById("vocabCount");
+
+    const activeWordText = document.getElementById("activeWordText");
+    const playAudioBtn = document.getElementById("playAudioBtn");
+    const activeWordMeaningInput = document.getElementById("activeWordMeaningInput");
+    const saveMeaningBtn = document.getElementById("saveMeaningBtn");
+    const clearMeaningBtn = document.getElementById("clearMeaningBtn");
+    const activeWordStatus = document.getElementById("activeWordStatus");
+
+    // ====== LOCAL STORAGE ======
+    const STORAGE_KEY = "english_reader_vocab_v1";
+
+    function loadDictionary() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          dictionary = parsed;
+        }
+      } catch (err) {
+        console.error("Gagal membaca localStorage:", err);
+        dictionary = {};
+      }
+    }
+
+    function saveDictionary() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dictionary));
+      } catch (err) {
+        console.error("Gagal menyimpan ke localStorage:", err);
+      }
+    }
+
+    // ====== AUTOTRANSLATE API ======
+    async function translateWordWithApi(text) {
+      if (!AUTO_TRANSLATE_ENABLED || !TRANSLATE_API_URL) {
+        return null;
+      }
+
+      const payload = {
+        text,
+        sourceLang: "en",
+      };
+
+      const res = await fetch(TRANSLATE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+      if (!data.translated) {
+        throw new Error("Response API tidak punya field 'translated'");
+      }
+      return data.translated;
+    }
+
+    // ====== RESET & STATS ======
+    function resetTextState() {
+      wordIndex = {};
+      totalWords = 0;
+      uniqueWordsInText = 0;
+      seenWordsGlobal = new Set();
+      activeWordKey = null;
+      activeWordOriginal = null;
+      currentSelectedSpan = null;
+      resetActiveWordPanel();
+    }
+
+    function resetActiveWordPanel() {
+      activeWordText.innerHTML = "<em>No word selected.</em>";
+      activeWordMeaningInput.value = "";
+      activeWordMeaningInput.disabled = true;
+      playAudioBtn.disabled = true;
+      saveMeaningBtn.disabled = true;
+      clearMeaningBtn.disabled = true;
+      activeWordStatus.textContent = "";
+    }
+
+    function updateStats() {
+      const knownInText = Object.keys(wordIndex).filter((k) => dictionary[k]).length;
+      const unknownInText = uniqueWordsInText - knownInText;
+
+      statsEl.textContent =
+        `Total words: ${totalWords} | Unique words: ${uniqueWordsInText} | ` +
+        `Known: ${knownInText} | Unknown: ${unknownInText}`;
+
+      const totalVocab = Object.keys(dictionary).length;
+      vocabCountEl.textContent = `Total saved vocab: ${totalVocab}`;
+      renderVocabList();
+    }
+
+    // ====== TOOLTIP ======
+    function showTooltipAtRect(rect, title, body) {
+      tooltip.innerHTML = `<strong>${title}</strong>${body}`;
+      tooltip.style.display = "block";
+
+      tooltip.style.top = "0px";
+      tooltip.style.left = "0px";
+
+      const ttRect = tooltip.getBoundingClientRect();
+
+      let top = rect.top - ttRect.height - 8;
+      if (top < 8) {
+        top = rect.bottom + 8;
+      }
+
+      let centerX = rect.left + rect.width / 2;
+      let left = centerX - ttRect.width / 2;
+
+      if (left < 8) left = 8;
+      const maxLeft = window.innerWidth - ttRect.width - 8;
+      if (left > maxLeft) left = maxLeft;
+
+      tooltip.style.top = `${top + window.scrollY}px`;
+      tooltip.style.left = `${left + window.scrollX}px`;
+    }
+
+    function showTooltip(span, word, meaning) {
+      const r = span.getBoundingClientRect();
+      const rect = {
+        top: r.top,
+        bottom: r.bottom,
+        left: r.left,
+        right: r.right,
+        width: r.width,
+      };
+      showTooltipAtRect(rect, word, meaning);
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = "none";
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("word") && e.target.id !== "tooltip") {
+        hideTooltip();
+      }
+    });
+
+    // ====== KLIK SATU KATA ======
+    function onWordClick(event) {
+      event.stopPropagation();
+      const span = event.currentTarget;
+      const key = span.dataset.key;
+      const originalWord = span.textContent;
+
+      if (currentSelectedSpan) {
+        currentSelectedSpan.classList.remove("selected");
+      }
+      currentSelectedSpan = span;
+      span.classList.add("selected");
+
+      setActiveWord(key, originalWord, span);
+    }
+
+    async function setActiveWord(key, originalWord, span) {
+      activeWordKey = key;
+      activeWordOriginal = originalWord;
+
+      activeWordText.textContent = originalWord;
+      activeWordMeaningInput.disabled = true;
+      activeWordMeaningInput.value = "";
+      playAudioBtn.disabled = false;
+      saveMeaningBtn.disabled = false;
+      clearMeaningBtn.disabled = false;
+
+      // Auto pronunciation
+      if ("speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance(originalWord);
+        utterance.lang = "en-US";
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      }
+
+      const existingMeaning = dictionary[key];
+
+      if (existingMeaning) {
+        activeWordMeaningInput.disabled = false;
+        activeWordMeaningInput.value = existingMeaning;
+        activeWordStatus.textContent =
+          "Meaning already saved. You can edit it then click Save again.";
+        showTooltip(span, originalWord, existingMeaning);
+        return;
+      }
+
+      activeWordStatus.textContent = "Requesting automatic translation...";
+      showTooltip(span, originalWord, "…");
+
+      if (AUTO_TRANSLATE_ENABLED && TRANSLATE_API_URL) {
+        try {
+          span.style.outline = "2px solid #16a34a";
+          const meaning = await translateWordWithApi(originalWord);
+
+          if (activeWordKey === key) {
+            activeWordMeaningInput.disabled = false;
+            activeWordMeaningInput.value = meaning;
+            activeWordStatus.textContent =
+              "Automatic translation. Edit if needed then click Save.";
+            showTooltip(span, originalWord, meaning);
+          }
+        } catch (err) {
+          console.warn("Auto-translate failed:", err);
+          activeWordStatus.textContent =
+            "Auto-translate failed. Fill the meaning manually then click Save.";
+          activeWordMeaningInput.disabled = false;
+        } finally {
+          span.style.outline = "";
+        }
+      } else {
+        activeWordStatus.textContent = "Manual mode. Fill the meaning then click Save.";
+        activeWordMeaningInput.disabled = false;
+      }
+    }
+
+    // ====== BLOK KALIMAT (SELECTION BAWAAN BROWSER) ======
+    function nodeInsidePdfViewer(node) {
+      if (!node) return false;
+      if (node === pdfViewer) return true;
+      return pdfViewer.contains(node.nodeType === 3 ? node.parentNode : node);
+    }
+
+    if (pdfViewer) {
+      pdfViewer.addEventListener("mouseup", async () => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) return;
+
+        const text = sel.toString().trim();
+        if (!text) return;
+
+        // pastikan selection berasal dari dalam pdfViewer
+        const range = sel.getRangeAt(0);
+        if (!nodeInsidePdfViewer(range.commonAncestorContainer)) return;
+
+        // cek jumlah kata (menggunakan semua jenis whitespace)
+        const words = text.split(/\s+/).filter(Boolean);
+        if (words.length < 2) {
+          // kalau cuma satu kata, biarkan fitur klik-per-kata yang bekerja
+          return;
+        }
+
+        const rect = range.getBoundingClientRect();
+        const rectObj = {
+          top: rect.top,
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+        };
+
+        // set state untuk kalimat (tidak disimpan ke vocab)
+        activeWordKey = null;
+        activeWordOriginal = text;
+
+        if (currentSelectedSpan) {
+          currentSelectedSpan.classList.remove("selected");
+          currentSelectedSpan = null;
+        }
+
+        activeWordText.textContent = text;
+        activeWordMeaningInput.disabled = true;
+        activeWordMeaningInput.value = "";
+        playAudioBtn.disabled = false;
+        saveMeaningBtn.disabled = true;     // kalimat tidak disimpan
+        clearMeaningBtn.disabled = true;
+
+        activeWordStatus.textContent =
+          "Sentence selected. Requesting automatic translation (not stored in vocabulary).";
+
+        // TTS kalimat
+        if ("speechSynthesis" in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = "en-US";
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        }
+
+        try {
+          const meaning = await translateWordWithApi(text);
+          activeWordMeaningInput.disabled = false;
+          activeWordMeaningInput.value = meaning;
+          activeWordStatus.textContent =
+            "Automatic sentence translation (not stored in vocabulary).";
+
+          showTooltipAtRect(rectObj, text, meaning);
+        } catch (err) {
+          console.error("Failed to translate sentence:", err);
+          activeWordStatus.textContent = "Failed to translate sentence.";
+        }
+      });
+    }
+
+    // ====== VOCAB LIST PANEL ======
+    function renderVocabList() {
+      vocabListEl.innerHTML = "";
+
+      const entries = Object.entries(dictionary).sort((a, b) =>
+        a[0].localeCompare(b[0])
+      );
+
+      if (!entries.length) {
+        vocabListEl.innerHTML = "<em>No saved vocabulary yet.</em>";
+        return;
+      }
+
+      entries.forEach(([en, id]) => {
+        const row = document.createElement("div");
+        row.className = "vocab-item";
+
+        const left = document.createElement("div");
+        const right = document.createElement("div");
+
+        const spanEn = document.createElement("span");
+        spanEn.className = "word-en";
+        spanEn.textContent = en;
+
+        const spanId = document.createElement("span");
+        spanId.className = "word-id";
+        spanId.textContent = id;
+
+        left.appendChild(spanEn);
+        left.appendChild(document.createElement("br"));
+        left.appendChild(spanId);
+
+        const btnDelete = document.createElement("button");
+        btnDelete.textContent = "delete";
+        btnDelete.addEventListener("click", () => {
+          if (confirm(`Remove "${en}" from vocabulary?`)) {
+            delete dictionary[en];
+            saveDictionary();
+            if (wordIndex[en]) {
+              wordIndex[en].forEach((s) => {
+                s.classList.remove("known");
+                s.classList.add("unknown");
+              });
+            }
+            if (activeWordKey === en) {
+              resetActiveWordPanel();
+            }
+            updateStats();
+          }
+        });
+
+        right.appendChild(btnDelete);
+        row.appendChild(left);
+        row.appendChild(right);
+        vocabListEl.appendChild(row);
+      });
+    }
+
+    // ====== PRONUNCIATION BUTTON ======
+    playAudioBtn.addEventListener("click", () => {
+      if (!activeWordOriginal) return;
+
+      if (!("speechSynthesis" in window)) {
+        alert("Browser does not support Speech Synthesis API.");
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(activeWordOriginal);
+      utterance.lang = "en-US";
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    });
+
+    // ====== SIMPAN / HAPUS ARTI (untuk 1 kata saja) ======
+    saveMeaningBtn.addEventListener("click", () => {
+      if (!activeWordKey) return; // kalimat tidak punya key
+      const meaning = activeWordMeaningInput.value.trim();
+      if (!meaning) {
+        alert("Fill the meaning first.");
+        return;
+      }
+
+      dictionary[activeWordKey] = meaning;
+      saveDictionary();
+
+      if (wordIndex[activeWordKey]) {
+        wordIndex[activeWordKey].forEach((s) => {
+          s.classList.remove("unknown");
+          s.classList.add("known");
+        });
+      }
+
+      activeWordStatus.textContent = "Meaning saved.";
+      updateStats();
+    });
+
+    clearMeaningBtn.addEventListener("click", () => {
+      if (!activeWordKey) return;
+      if (!confirm(`Delete meaning for "${activeWordOriginal}"?`)) return;
+
+      delete dictionary[activeWordKey];
+      saveDictionary();
+
+      if (wordIndex[activeWordKey]) {
+        wordIndex[activeWordKey].forEach((s) => {
+          s.classList.remove("known");
+          s.classList.add("unknown");
+        });
+      }
+
+      activeWordMeaningInput.value = "";
+      activeWordStatus.textContent = "Meaning deleted. Word is unknown again.";
+      updateStats();
+    });
+
+    // ====== PDF TEXT LAYER RENDERING ======
+    function addTextItemsToLayer(textLayerDiv, textContent, viewport) {
+      const pdfjsLib = window.pdfjsLib;
+      const items = textContent.items || [];
+
+      items.forEach((item) => {
+        const tx = pdfjsLib.Util.transform(
+          pdfjsLib.Util.transform(viewport.transform, item.transform),
+          [1, 0, 0, -1, 0, 0]
+        );
+
+        const x = tx[4];
+        const y = tx[5];
+        const fontHeight = Math.hypot(tx[1], tx[3]);
+
+        const textDiv = document.createElement("div");
+        textDiv.className = "textItem";
+        textDiv.style.left = x + "px";
+        textDiv.style.top = y - fontHeight + "px";
+        textDiv.style.fontSize = fontHeight + "px";
+        textDiv.style.lineHeight = fontHeight + "px";
+
+        const tokens = item.str.match(/\S+|\s+/g) || [];
+
+        tokens.forEach((tok) => {
+          if (tok.trim() === "") {
+            textDiv.appendChild(document.createTextNode(tok));
+          } else {
+            const key = tok.toLowerCase();
+            const span = document.createElement("span");
+            span.textContent = tok;
+            span.classList.add("word");
+            span.dataset.key = key;
+
+            if (dictionary[key]) {
+              span.classList.add("known");
+            } else {
+              span.classList.add("unknown");
+            }
+
+            span.addEventListener("click", onWordClick);
+
+            if (!wordIndex[key]) wordIndex[key] = [];
+            wordIndex[key].push(span);
+
+            if (!seenWordsGlobal.has(key)) {
+              seenWordsGlobal.add(key);
+              uniqueWordsInText++;
+            }
+
+            totalWords++;
+            textDiv.appendChild(span);
+          }
+        });
+
+        textLayerDiv.appendChild(textDiv);
+      });
+    }
+
+    // ====== PDF HANDLING ======
+    if (pdfInput) {
+      pdfInput.addEventListener("change", async () => {
+        const file = pdfInput.files[0];
+        if (!file) return;
+
+        if (!window.pdfjsLib) {
+          alert("PDF.js belum siap. Pastikan kamu online dan script CDN-nya benar.");
+          return;
+        }
+
+        const pdfjsLib = window.pdfjsLib;
+
+        pdfViewer.innerHTML = `
+          <div class="empty-message" style="padding:30px 16px; text-align:center; color:#9ca3af;">
+            Reading PDF and building text layer, please wait...
+          </div>
+        `;
+        resetTextState();
+        updateStats();
+
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+          const pdf = await loadingTask.promise;
+
+          pdfViewer.innerHTML = "";
+
+          const scale = 1.5;
+
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale });
+
+            const pageWrapper = document.createElement("div");
+            pageWrapper.className = "pageWrapper";
+
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            pageWrapper.appendChild(canvas);
+
+            const textLayerDiv = document.createElement("div");
+            textLayerDiv.className = "textLayer";
+            textLayerDiv.style.width = viewport.width + "px";
+            textLayerDiv.style.height = viewport.height + "px";
+
+            pageWrapper.appendChild(textLayerDiv);
+
+            const pageLabel = document.createElement("div");
+            pageLabel.className = "pageNumberLabel";
+            pageLabel.textContent = "Page " + pageNum + " / " + pdf.numPages;
+            pageWrapper.appendChild(pageLabel);
+
+            pdfViewer.appendChild(pageWrapper);
+
+            await page.render({
+              canvasContext: context,
+              viewport,
+            }).promise;
+
+            const textContent = await page.getTextContent();
+            addTextItemsToLayer(textLayerDiv, textContent, viewport);
+          }
+
+          updateStats();
+        } catch (err) {
+          console.error("Gagal membaca PDF:", err);
+          pdfViewer.innerHTML =
+            "<div class='empty-message' style='padding:30px 16px; text-align:center; color:#9ca3af;'>Failed to read PDF. Try another file or check console.</div>";
+        }
+      });
+    }
+
+    // ====== EXPORT & CLEAR VOCAB ======
+    document.getElementById("exportVocab").addEventListener("click", () => {
+      const dataStr =
+        "data:text/json;charset=utf-8," +
+        encodeURIComponent(JSON.stringify(dictionary, null, 2));
+      const a = document.createElement("a");
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", "vocabulary.json");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+
+    document.getElementById("clearVocab").addEventListener("click", () => {
+      if (!confirm("Are you sure you want to delete all saved vocabulary?")) return;
+      dictionary = {};
+      saveDictionary();
+      Object.values(wordIndex)
+        .flat()
+        .forEach((span) => {
+          span.classList.remove("known");
+          span.classList.add("unknown");
+        });
+      updateStats();
+    });
+
+    // ====== INIT ======
+    loadDictionary();
+    resetTextState();
+    updateStats();
+  </script>
+</body>
+</html>
